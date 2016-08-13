@@ -1,0 +1,181 @@
+{% extends "base/base.html" %}
+{% load mini_templatetags %}
+{% block content %}
+    <style type="text/css">
+        .glyphicon{COLOR: #000000}
+        #showModalGroup{font-family:Tahoma,Verdana,微软雅黑,新宋体;font-size:12px}
+    </style>
+
+    <div class="wrapper">
+        <header class="main-header">
+            <!-- 导航 -->
+            {% include "sysBase/navbar_custom_menu.html" %}
+        </header>
+        <!-- 左侧菜单  -->
+        {% include "sysBase/left_index.html" %}
+
+
+        <!-- 内容部分 -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <section class="content-header">
+                <h1>
+                    {{ keyword }}的任务
+                    <small></small>
+                </h1>
+{#                <ol class="breadcrumb">#}
+{#                    <li><a href="#"><i class="fa fa-dashboard"></i> 主页</a></li>#}
+{#                    <li class="active">节目源</li>#}
+{#                </ol>#}
+            </section>
+
+            <!-- Main content -->
+            <section class="content">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="main">
+                            <form  method="get">
+                                <div class="form-inline"  align="center">
+                                    <label>开始日期：</label>
+                                    <input style="width:180px; height:30px;" name="start_time" class="Wdate form-control" onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss'})" type="text"  id="start" value="{{ u_stime }}"/>
+
+                                    <label>结束日期：</label>
+                                    <input style="width:180px;height:30px" name="end_time" class="Wdate form-control" onClick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss'})" type="text"  id="end" value="{{ u_etime }}"/>
+                                    <input name="keyword" value="{{ keyword }}" type=hidden>
+									  <div class="form-group">
+										<select class="form-control" name="taskstatus"> 
+										  <option value="9">所有状态</option> 
+										  <option value="2">下载中</option> 
+										  <option value="0">未开始</option> 
+										  <option value="1">已完成</option> 
+										  </select>
+									  </div>
+                                    <button class="btn btn-primary btn-sm">查询</button>
+                                </div>
+                            </form>
+                            <div style="height:15px;"></div>
+                            <div align="right">
+                                <ul class="pagination" style="margin:0px;">
+                                    <li class="mon_fq {% if t == "yesterday" %} active {% endif %}" value="1"><a href="/spider/taskinfo/?keyword={{keyword}}&taskstatus={{taskstatus}}&{{ 'yesterday'|rrdtool_time }}">昨天</a></li>
+                                    <li class="mon_fq {% if t == "today" %} active {% endif %}" value="2"><a href="/spider/taskinfo/?keyword={{keyword}}&taskstatus={{taskstatus}}&{{ 'today'|rrdtool_time }}">今天</a></li>
+                                    <li class="mon_fq {% if t == "week" %} active {% endif %}" value="5"><a href="/spider/taskinfo/?keyword={{keyword}}&taskstatus={{taskstatus}}&{{ 'week'|rrdtool_time }}">最近一周</a></li>
+                                    <li class="mon_fq {% if t == "month" %} active {% endif %}" value="10"><a href="/spider/taskinfo/?keyword={{keyword}}&taskstatus={{taskstatus}}&{{ 'month'|rrdtool_time }}">最近30天</a></li>
+                                    <li class="mon_fq {% if t == "years" %} active {% endif %}" value="30"><a href="/spider/taskinfo/?keyword={{keyword}}&taskstatus={{taskstatus}}&{{ 'years'|rrdtool_time }}">最近一年</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="box">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th>任务ID</th>
+                                        <th>集数</th>
+                                        <th>爬取地址</th>
+                                        <th>抓取时间</th>
+                                        <th>完成时间</th>
+										<th>任务状态</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for node in object_result.object_list reversed %}
+                                        <tr id="tr_id_{{ node.id }}">
+                                            <td style="vertical-align:middle">{{ node.linkmd5id }}</td>
+                                            <td style="vertical-align:middle">{{ node.episode }}</td>
+                                            <td style="vertical-align:middle">{{ node.dramaurl }}</td>
+                                            <td style="vertical-align:middle">{{ node.stime|strf_time }}</td>
+											{% if node.etime != Null %}
+                                            <td style="vertical-align:middle">{{ node.stime|strf_time }}</td>
+											{% else %}
+                                            <td style="vertical-align:middle">无</td>
+											{% endif %}
+                                            {% if node.downloadstatus == '1' %}
+                                            <td style="vertical-align:middle"><font color="green">下载成功</font></td>
+                                            {% elif node.downloadstatus == '0'%}
+                                            <td style="vertical-align:middle"><font color="gray">未下载</font></td>
+                                            {% elif node.downloadstatus == '2' %}
+                                            <td style="vertical-align:middle"><font color="blue">正在下载</font></td>
+                                            {% else %}
+                                            <td style="vertical-align:middle"><font color="black">未知</font></td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+
+                                </table>
+								<div style="float:right;">
+									<select class="form-control input-sm" id="pagesize" style="width:60px;height:28px; margin-top: 5px" onChange="pagesizeSelect(this)">
+										<option value="5">5</option>
+										<option value="10">10</option>
+										<option value="20">20</option>
+										<option value="30">30</option>
+										<option value="40">40</option>
+										<option value="50">50</option>
+										<option value="100">100</option>
+									</select>
+								</div>
+
+									<ul class="pagination pagination-sm" style="float: right; padding: 0; margin: 0; margin-top: 5px">
+										{% if object_result.has_previous %}
+											{% if search %}
+												<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&start_time={{u_stime}}&end_time={{u_etime}}&page={{ object_result.previous_page_number }}&pagesize={{ pagesize }}&search={{ search }}">← Previous</a>&nbsp;</li>
+											{% else %}
+												<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&start_time={{u_stime}}&end_time={{u_etime}}&page={{ object_result.previous_page_number }}&pagesize={{ pagesize }}">← Previous</a>&nbsp;</li>
+											{% endif %}
+										{% else %}
+											<li class="disabled"><a href="#">← Previous</a>&nbsp;</li>
+										{% endif %}
+										<!--  <li class="active"><a href="#">1</a></li>-->
+										{% for p in page_range %}
+											{% ifequal p object_result.number %}
+												<li class="active"><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&page={{p}}&pagesize={{ pagesize }}&start_time={{u_stime}}&end_time={{u_etime}}" title="第{{p}}页">{{p}}</a></li>
+											{% else %}
+
+												{% if search %}
+													<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&page={{p}}&pagesize={{ pagesize }}&search={{ search }}&start_time={{u_stime}}&end_time={{u_etime}}" title="第{{p}}页">{{p}}</a></li>
+												{% else %}
+													<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&page={{p}}&pagesize={{ pagesize }}&start_time={{u_stime}}&end_time={{u_etime}}" title="第{{p}}页">{{p}}</a></li>
+												{% endif %}
+
+											{% endifequal %}
+										{% endfor %}
+										{% if object_result.has_next %}
+											{% if search %}
+												<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&start_time={{u_stime}}&end_time={{u_etime}}&page={{ object_result.next_page_number }}&pagesize={{ pagesize }}&search={{ search }}" title="下一页">Next →</a>&nbsp;</li>
+											{% else %}
+												<li><a href="?keyword={{keyword}}&taskstatus={{taskstatus}}&start_time={{u_stime}}&end_time={{u_etime}}&page={{ object_result.next_page_number }}&pagesize={{ pagesize }}" title="下一页">Next →</a>&nbsp;</li>
+											{% endif %}
+										{% else %}
+											<li class="disabled"><a href="#" title="下一页">Next →</a>&nbsp;</li>
+										{% endif %}
+									</ul>
+                            </div><!-- /.box-body -->
+                            <div style="height:15px;"></div>
+                        </div><!-- /.box -->
+                    </div><!-- /.col -->
+                </div><!-- /.row -->
+
+
+            </section><!-- /.content -->
+        </div><!-- /.content-wrapper -->
+
+        <!-- 工具条切换风格 -->
+        {% include "sysBase/sidebar.html" %}
+        <div class='control-sidebar-bg'></div>
+    </div><!-- ./wrapper -->
+
+{% endblock %}
+{% block js_append %}
+    <script src="/statics/DatePicker/WdatePicker.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        /* 监控频率 */
+        $(".mon_fq").bind("click",function(){
+            $(".mon_fq").removeClass('active');
+            $(this).addClass('active');
+            //$("#id_mon_fq").val($(this).attr('value'))
+        });
+
+		var selected="{{taskstatus}}";
+		$("select[name=taskstatus]").find("option[value="+selected+"]").attr("selected",true);
+    </script>
+{% endblock %}

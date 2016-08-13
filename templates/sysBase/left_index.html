@@ -1,0 +1,45 @@
+<aside class="main-sidebar">
+    <!-- sidebar: style can be found in sidebar.less -->
+    <section class="sidebar">
+
+        <!-- /.search form -->
+        <!-- sidebar menu: : style can be found in sidebar.less -->
+        <ul class="sidebar-menu">
+            <li class="header">MAIN NAVIGATION</li>
+{% ifequal request.user.is_staff True %}
+            <li class="treeview active">
+                <a href="#">
+                    <i class="fa fa-user"></i> <span>用户组</span> <i class="fa fa-angle-left pull-right"></i>
+                </a>
+                <ul class="treeview-menu">
+
+                    <li {% if '/user/user_index/' == request.path  %}class="active"{% endif  %}><a href="/user/user_index/"><i class="fa fa-angle-double-right"></i> 用户管理</a></li>
+                </ul>
+            </li>
+{% endifequal %}
+
+			<li class="treeview active">
+				<a href="#">
+					<i class="fa fa-fw fa-briefcase"></i> <span>频道管理</span> <i class="fa fa-angle-left pull-right"></i>
+				</a>
+				<ul class="treeview-menu">
+					<li {% if '/playsource/source/' == request.path  %}class="active"{% endif  %}><a href="/playsource/source/"><i class="fa fa-angle-double-right"></i> 源管理</a></li>
+				</ul>
+			</li>
+            <li class="treeview active">
+                <a href="#">
+                    <i class="fa fa-fw fa-briefcase"></i> <span>爬虫管理</span> <i class="fa fa-angle-left pull-right"></i>
+                </a>
+                <ul class="treeview-menu">
+                    <li {% if '/spider/taskmain/' == request.path  %}class="active"{% endif  %}><a href="/spider/taskmain/"><i class="fa fa-angle-double-right"></i> 任务管理</a></li>
+                </ul>
+            </li>
+
+        </ul>
+
+
+
+
+    </section>
+    <!-- /.sidebar -->
+</aside>

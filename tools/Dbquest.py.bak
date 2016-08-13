@@ -1,0 +1,38 @@
+#!/usr/bin/python2.7
+#coding:utf-8
+#AUTHOR: yangxb
+#CREATER: 2016-06-21 18:30:21
+#FILENAME: Dbquest.py
+#DESCRIPTION: 
+#===============================================================
+
+import MySQLdb
+import urllib2
+import urllib
+import json,sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+def post_info(url,postinfo):
+    jdata = urllib.urlencode(postinfo)
+    req = urllib2.urlopen(url, jdata)
+    return req.read()
+
+def dbquest(sql):
+    try:
+        user='recoder'
+        passwd='kYKQBGfsJMVy00y6PDl0'
+        host='63.221.138.138'
+        db='recoder'
+        conn=MySQLdb.connect(host=host,db=db,user=user,passwd=passwd,charset='utf8')
+        cur=conn.cursor()
+        cur.execute(sql)
+        _sql=cur.fetchall()
+        conn.commit()
+        cur.close()
+        conn.close()
+        return _sql
+    except Exception:
+        return -1
+

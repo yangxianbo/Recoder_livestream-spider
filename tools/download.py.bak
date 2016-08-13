@@ -1,0 +1,80 @@
+#!/usr/bin/python2.7
+#coding:utf-8
+#AUTHOR: yangxb
+#CREATER: 2016-03-15 18:35:30
+#FILENAME: download.py
+#DESCRIPTION: 
+#===============================================================
+
+import urllib,urllib2 
+import os,sys,json,time
+import socket
+import ConfigParser
+from Dbquest import dbquest
+
+socket.setdefaulttimeout(10)
+
+# 设置默认编码为utf-8
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+path="/www/Recoder/tools/config.ini"
+if not os.path.exists(path):
+    sys.exit("找不到配置文件:%s" % path)
+cf = ConfigParser.ConfigParser()
+cf.read(path)
+basepath=cf.get('base_path','download')
+
+class Download():
+    def __init__(self,basepath):
+        self.basepath=basepath
+    
+    def _gettask(self):
+        sql='select dirpath from spider_taskmain'
+        dirlist=dbquest(sql)
+        taskmain=[]
+        for dirname in dirlist:
+            pertask=self._gettaskinfo(dirname[0])
+            taskmain=list(set(taskmain).union(set(pertask)))
+        return taskmain
+        
+
+    def _gettaskinfo(self,dirname):
+        sql='select downloadurl,episode,id from spider_taskinfo where dramaurl like "%%%s%%" and downloadstatus=0'%dirname
+        tasklist=dbquest(sql)
+        return_list=[]
+        for task in tasklist:
+            return_list.append((task[0],task[1],dirname,task[2]))
+        return return_list
+
+    def _download(self,url,episode,path,taskid):
+        downloadpath="%s/%s"%(self.basepath,path)
+        downloadname="%s/%s/%s_%s.mp4"%(self.basepath,path,path,episode)
+        if not os.path.exists(downloadpath):
+            os.system('mkdir -p %s'%downloadpath)
+        try:
+            sql2='update spider_taskinfo set downloadstatus=2  where id=%s'%taskid
+            dbquest(sql2)
+            d_info=urllib.urlretrieve(url,downloadname)
+            total=int(d_info[-1]['Content-Length'])
+            localsize=os.path.getsize(downloadname)
+            etime=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+            if localsize >= total:
+                sql='update spider_taskinfo set downloadstatus=1 etime="%s" where id=%s'%(etime,taskid)
+                dbquest(sql)
+                return 0
+        except:
+            sql='update from spider_taskinfo set downloadstatus=0  where id=%s'%taskid
+            dbquest(sql)
+            os.system('rm -f %s'%downloadname)
+            return -1
+
+    def main(self):
+        taskmain=self._gettask()
+        for task in taskmain:
+#            print task
+            self._download(task[0],task[1],task[2],task[3])
+
+if __name__ == '__main__':
+    d=Download(basepath) 
+    d.main()
